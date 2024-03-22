@@ -8,11 +8,11 @@ def main():
     dht = DHT("", env)
 
     # Lancement de la simulation pour une durée de 100 unités de temps (à ajuster selon vos besoins)
-    dht.run_simulation(until_time=100)
+    dht.run_simulation(until_time=70)
 
     # Affichage de l'état de la DHT
     print(dht)
-    
+
 
 if __name__ == "__main__":
     main()

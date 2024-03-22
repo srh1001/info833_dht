@@ -3,7 +3,6 @@ import random
 import simpy
 from Node import Node
 from Message import Message
-import MessageLogger
 
 class DHT(object):
     def __init__(self, name: str, env: simpy.Environment):
@@ -28,10 +27,20 @@ class DHT(object):
         node5 = Node(self.env, 5)
 
         self.nodes[1] = node1
+        self.env.process(node1.run())
+
         self.nodes[2] = node2
+        self.env.process(node2.run())
+        
         self.nodes[3] = node3
+        self.env.process(node3.run())
+
         self.nodes[4] = node4
+        self.env.process(node4.run())
+
         self.nodes[5] = node5
+        self.env.process(node5.run())
+
 
         node1.left_neighbour = node5
         node1.right_neighbour = node2
@@ -54,25 +63,30 @@ class DHT(object):
         node5.is_inserted = True
 
 
-    def join(self):
+    def join_random(self):
         new_node_id = random.randint(6, 20)  # Choisir une plage d'IDs
-        while new_node_id in [n.node_id for n in self.nodes]:
+        while new_node_id in self.nodes.keys():
             new_node_id = random.randint(1, 20)
 
         joining_node = Node(self.env, new_node_id)
-        target_node = random.choice(self.nodes)
-        msg = Message(env = self.env,
-                        _type='insertion_request', 
-                        _from=joining_node,
-                        _to=target_node
-        )
+        if self.nodes:
 
-        self.nodes[new_node_id] = joining_node
-        print(f"[ {self.env.now} ] Node {joining_node.node_id} joined DHT {self.name}.\n")
-        joining_node.send_message(msg)
+            target_node = random.choice(list(self.nodes.values()))
+            msg = Message(env = self.env,
+                            _type='insertion_request', 
+                            _from=joining_node,
+                            _to=target_node
+            )
+
+            self.nodes[new_node_id] = joining_node
+            print(f"[ {self.env.now} ] Node {joining_node.node_id} joined DHT {self.name}.\n")
+            self.env.process(joining_node.run())
+            joining_node.send_message(msg)
+        else:
+            print("Cannot join DHT, no existing nodes.")
 
 
-    def join(self, joining_node: Node, target_node: Node):
+    def join_node(self, joining_node: Node, target_node: Node):
         if joining_node.node_id in self.nodes.keys():
             print(f"[ {self.env.now} ] Node {joining_node.node_id} could not join DHT {self.name} as ID is already used.\n")
 
@@ -88,10 +102,12 @@ class DHT(object):
 
             self.nodes[joining_node.node_id] = joining_node
             print(f"[ {self.env.now} ] Node {joining_node.node_id} joined DHT {self.name}.\n")
+
+            self.env.process(joining_node.run())
             joining_node.send_message(msg)    
 
 
-    def join(self, joining_node_id: int, target_node_id: int):
+    def join_id(self, joining_node_id: int, target_node_id: int):
         if joining_node_id in self.nodes.keys():
             print(f"[ {self.env.now} ] Node {joining_node_id} could not join DHT {self.name} as ID is already used.\n")
 
@@ -110,21 +126,63 @@ class DHT(object):
 
             self.nodes[joining_node.node_id] = joining_node
             print(f"[ {self.env.now} ] Node {joining_node.node_id} joined DHT {self.name}.\n")
-            joining_node.send_message(msg)    
+            self.env.process(joining_node.run())
+            joining_node.send_message(msg)
 
+    def leave_random(self):
+            if len(self.nodes) > 0:
+                target_node = random.choice(list(self.nodes.values()))
+
+                while target_node.is_inserted is False:
+                    target_node = random.choice(list(self.nodes.values()))
+
+                self.env.process(target_node.leave_dht())
+                del self.nodes[target_node.node_id]
+                print(f"[{self.env.now}] Node {target_node.node_id} removed from DHT.\n")
+            else:
+                print(f"[{self.env.now}] No node to make leave DHT currently.\n")
+
+
+
+    def schedule_join_random(self, n: int = 2):
+        while True:
+            delay = random.uniform(5, 15)
+            delay = 5
+            yield self.env.timeout(delay)
+            
+            for _ in range(0,n):
+                self.join_random()
+
+    def schedule_leave_random(self, n: int = 2):
+
+        while True:
+            delay = random.uniform(10, 12)
+            delay = 10
+            yield self.env.timeout(delay)
+
+            for _ in range(0,n):
+                self.leave_random()
+
+            
 
     def run_simulation(self, until_time):
 
         self.initialize()
 
-        #for _ in range(0,2):
-        #    self.join()
+        self.join_id(6, 5)
+        self.join_id(7, 4)
 
-        self.join(6, 5)
-        self.join(7, 4)
+        for _ in range(0,2):
+            self.join_random()
 
-        for node in self.nodes.values():
-            self.env.process(node.run())
+        self.env.process(self.schedule_join_random())
+
+        self.env.process(self.schedule_leave_random())
 
         self.env.run(until=until_time)
+
+
+
+
+
 

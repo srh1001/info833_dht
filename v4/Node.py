@@ -291,8 +291,8 @@ class Node(object):
         self.send_message(message = msg_right)
 
         yield self.env.timeout(1)
-
-        print(f"[ {self.env.now} ] Node {self.node_id} has finished warning its neighbours of its departure.\n")
+        self.is_inserted = False
+        print(f"[ {self.env.now} ] Node {self.node_id} has finished warning its neighbours of its departure. It is now not inserted.\n")
 
 
     def update(self, updates: dict):
@@ -314,6 +314,7 @@ class Node(object):
         print(f"[ {self.env.now} ] All is_ready messages received for node {self.node_id}.\n")
 
     def run(self):
+        print(f"[ {self.env.now} ] Node {self.node_id} running.\n")
         while True:
 
             while self.update_request_messages.items:
