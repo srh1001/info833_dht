@@ -6,12 +6,13 @@ import simpy
 
 
 class Message(object):
-    def __init__(self, env: simpy.Environment, _type: str, _from: Node, _to: Node, content: dict = {}):
+    def __init__(self, env: simpy.Environment, _type: str, _from: Node, _to: Node, content: dict = {}, tag: str = None):
         self.env: simpy.Environment = env
         self._type = _type
         self._from = _from
         self._to = _to
         self.content = content
+        self.tag = tag
 
         self.archives = {}
 
