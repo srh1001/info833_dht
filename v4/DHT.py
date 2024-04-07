@@ -147,7 +147,12 @@ class DHT(object):
                 while target_node.is_inserted is False:
                     target_node = random.choice(list(self.nodes.values()))
 
-                yield from target_node.leave_dht()
+                could_left = yield from target_node.leave_dht()
+                
+                while could_left == False:
+                    self.env.timeout(random.randint(2,6))
+                    could_left = yield from target_node.leave_dht()
+
                 del self.nodes[target_node.node_id]
                 print(f"[ {self.env.now} ] Node {target_node.node_id} removed from DHT.\n")
             else:

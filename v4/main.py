@@ -7,7 +7,7 @@ def main():
     env = simpy.Environment()
     dht = DHT("", env)
 
-    dht.run_simulation(until_time=250 )
+    dht.run_simulation(until_time=50)
 
     # Affichage de l'état de la DHT
     print(dht)

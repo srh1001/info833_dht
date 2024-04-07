@@ -329,48 +329,55 @@ class Node(object):
         yield self.env.timeout(1)
 
         # attendre de recevoir ces messages dans la liste is_ready_to_update_messages
-        yield from self.wait_for_is_ready_to_update([msg_left, msg_right])
+        neighbours_ready = yield from self.wait_for_is_ready_to_update_timeout([msg_left, msg_right])
 
-        # modifier les messages pour qu'ils deviennent de type update
-        _to = msg_left._from
-        msg_left.update(
-                        {
-                            '_type': 'update', 
-                            '_from': self, 
-                            '_to': _to, 
-                            'content': {'updates': {'right_neighbour': self.right_neighbour}}
-                        }
-                    )
-        self.send_message(message = msg_left)
-
-        _to = msg_right._from
-        msg_right.update(
+        if neighbours_ready:
+            # modifier les messages pour qu'ils deviennent de type update
+            _to = msg_left._from
+            msg_left.update(
                             {
                                 '_type': 'update', 
                                 '_from': self, 
                                 '_to': _to, 
-                                'content': {'updates': {'left_neighbour': self.left_neighbour}}
+                                'content': {'updates': {'right_neighbour': self.right_neighbour}}
                             }
                         )
-        self.send_message(message = msg_right)
+            self.send_message(message = msg_left)
 
-        yield self.env.timeout(1)
+            _to = msg_right._from
+            msg_right.update(
+                                {
+                                    '_type': 'update', 
+                                    '_from': self, 
+                                    '_to': _to, 
+                                    'content': {'updates': {'left_neighbour': self.left_neighbour}}
+                                }
+                            )
+            self.send_message(message = msg_right)
 
-        # Renvoyer les demandes d'insertion aux voisins appropriés
-        for insertion_message in self.insertion_request_messages.items:
-            joining_node = insertion_message._from
-            if joining_node.node_id < self.node_id:
-                # Renvoyer la demande d'insertion au voisin gauche
-                insertion_message.update({'_to': self.left_neighbour})
-                self.send_message(message=insertion_message)
-            else:
-                # Renvoyer la demande d'insertion au voisin droit
-                insertion_message.update({'_to': self.right_neighbour})
-                self.send_message(message=insertion_message)        
+            yield self.env.timeout(1)
+
+            # Renvoyer les demandes d'insertion aux voisins appropriés
+            for insertion_message in self.insertion_request_messages.items:
+                joining_node = insertion_message._from
+                if joining_node.node_id < self.node_id:
+                    # Renvoyer la demande d'insertion au voisin gauche
+                    insertion_message.update({'_to': self.left_neighbour})
+                    self.send_message(message=insertion_message)
+                else:
+                    # Renvoyer la demande d'insertion au voisin droit
+                    insertion_message.update({'_to': self.right_neighbour})
+                    self.send_message(message=insertion_message)        
+            
+            self.is_inserted = False
+            print(f"[ {self.env.now} ] Node {self.node_id} has finished warning its neighbours of its departure. It is now not inserted.\n")
+            
+            return True
         
-        self.is_inserted = False
-        print(f"[ {self.env.now} ] Node {self.node_id} has finished warning its neighbours of its departure. It is now not inserted.\n")
+        else:
 
+            yield self.env.timeout(1)
+            return False
 
     def update(self, updates: dict):
         for key, value in updates.items():
