@@ -9,7 +9,7 @@ def main():
 
     dht.run_simulation(until_time=50)
 
-    # Affichage de l'état de la DHT
+    # Affichage de l'état final de la DHT
     print(dht)
 
 
