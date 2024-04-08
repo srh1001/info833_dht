@@ -18,7 +18,7 @@ Pour controler le nombre de noeuds rejoignant ou quittant la DHT, au cours de la
             start_time = 20, 
             end_time = 170, 
             delay = [10, 20], 
-            nb_nodes = 2
+            nb_nodes = 1
             )
         ) 
 
