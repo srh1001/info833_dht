@@ -22,7 +22,7 @@ Pour controler le nombre de noeuds rejoignant ou quittant la DHT, au cours de la
             )
         ) 
 
-Voici un exemple de sortie (état final de la DHT) en exécutant la simulation sur 250 unités de temps :  
+Voici un exemple de sortie (état final de la DHT) en exécutant la simulation sur 250 unités de temps, montrant pour chaque noeud ses voisins :  
 
 ![alt text](/images/output_state_dht_1.png)  
 ![alt text](/images/output_state_dht_2.png)  
