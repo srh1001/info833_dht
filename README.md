@@ -11,7 +11,7 @@ Pour controler le nombre de noeuds rejoignant ou quittant la DHT, au cours de la
             delay = [5, 10], 
             nb_nodes = 2
             )
-        )</i>
+        )
 
     self.env.process(
         self.schedule_leave_random(
